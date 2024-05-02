@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/openfga/go-sdk/client"
 	"github.com/spf13/cobra"
-
 	"github.com/openfga/cli/cmd/model"
 	"github.com/openfga/cli/cmd/tuple"
 	"github.com/openfga/cli/internal/authorizationmodel"
@@ -113,9 +113,11 @@ var importCmd = &cobra.Command{
 			return err //nolint:wrapcheck
 		}
 
-		format, storeData, err := storetest.ReadFromFile(fileName, path.Dir(fileName))
 		if err != nil {
 			return err //nolint:wrapcheck
+		}
+		if storeData.Name == "" {
+			storeData.Name = strings.TrimSuffix(path.Base(fileName), path.Ext(fileName))
 		}
 
 		fgaClient, err := clientConfig.GetFgaClient()
