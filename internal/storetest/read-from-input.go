@@ -19,9 +19,10 @@ package storetest
 import (
 	"fmt"
 	"os"
+	"strings"
+	"path"
 
 	"github.com/openfga/cli/internal/authorizationmodel"
-
 	"gopkg.in/yaml.v3"
 )
 
@@ -35,6 +36,7 @@ func ReadFromFile(fileName string, basePath string) (authorizationmodel.ModelFor
 	if err != nil {
 		return format, nil, fmt.Errorf("failed to read file %s due to %w", fileName, err)
 	}
+	defer testFile.Close()
 
 	decoder := yaml.NewDecoder(testFile)
 	decoder.KnownFields(true)
@@ -42,6 +44,10 @@ func ReadFromFile(fileName string, basePath string) (authorizationmodel.ModelFor
 	err = decoder.Decode(&storeData)
 	if err != nil {
 		return format, nil, fmt.Errorf("failed to unmarshal file %s due to %w", fileName, err)
+	}
+
+	if storeData.Name == "" {
+		storeData.Name = strings.TrimSuffix(path.Base(fileName), path.Ext(fileName))
 	}
 
 	format, err = storeData.LoadModel(basePath)
