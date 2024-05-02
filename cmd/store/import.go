@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/openfga/go-sdk/client"
 	"github.com/spf13/cobra"
@@ -34,18 +35,22 @@ import (
 )
 
 func importStore(
-	clientConfig fga.ClientConfig,
-	fgaClient client.SdkClient,
-	storeData *storetest.StoreData,
-	format authorizationmodel.ModelFormat,
-	storeID string,
-	maxTuplesPerWrite int,
-	maxParallelRequests int,
+    clientConfig fga.ClientConfig,
+    fgaClient client.SdkClient,
+    storeData *storetest.StoreData,
+    format authorizationmodel.ModelFormat,
+    storeID string,
+    fileName string,
+    maxTuplesPerWrite int,
+    maxParallelRequests int,
+) (*CreateStoreAndModelResponse, error) {
 ) (*CreateStoreAndModelResponse, error) {
 	var err error
 	var response *CreateStoreAndModelResponse //nolint:wsl
-	if storeID == "" {                        //nolint:wsl
-		createStoreAndModelResponse, err := CreateStoreWithModel(clientConfig, storeData.Name, storeData.Model, format)
+        if storeData.Name == "" {
+            storeData.Name = strings.TrimSuffix(path.Base(fileName), path.Ext(fileName))
+        }
+        createStoreAndModelResponse, err := CreateStoreWithModel(clientConfig, storeData.Name, storeData.Model, format)
 		response = createStoreAndModelResponse
 		if err != nil { //nolint:wsl
 			return nil, err
@@ -119,12 +124,11 @@ var importCmd = &cobra.Command{
 		}
 
 		fgaClient, err := clientConfig.GetFgaClient()
-		if err != nil {
-			return fmt.Errorf("failed to initialize FGA Client due to %w", err)
-		}
-
-		createStoreAndModelResponse, err = importStore(clientConfig, fgaClient, storeData, format,
-			storeID, maxTuplesPerWrite, maxParallelRequests)
+    createStoreAndModelResponse, err = importStore(clientConfig, fgaClient, storeData, format, storeID, fileName, maxTuplesPerWrite, maxParallelRequests)
+    if err != nil {
+        return err
+    }
+    }
 		if err != nil {
 			return err
 		}
